@@ -1,0 +1,77 @@
+---
+title: Internal-Iterable
+description: SortAO 的回调式内部迭代协议。
+sidebar:
+  order: 3
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+`InternalIterable` 是 SortAO 对容器提供的一系列高性能的内置迭代方法的接口。
+
+| 方法                          | 描述                                             |
+| :---------------------------- | :----------------------------------------------- |
+| **forEach(callback)**         | 遍历所有元素。在回调中返回 `true` 可以提前终止。 |
+| **map(callback)**             | 映射为新数组。                                   |
+| **filter(predicate)**         | 过滤并返回原生数组。                             |
+| **some(predicate)**           | 测试是否至少有一个元素通过测试。                 |
+| **every(predicate)**          | 测试是否所有元素都通过测试。                     |
+| **find(predicate)**           | 返回第一个满足条件的元素。                       |
+| **findIndex(predicate)**      | 返回第一个满足条件的元素的逻辑排名。             |
+| **indexOf(value)**            | 返回指定元素的第一个逻辑排名。                   |
+| **includes(value)**           | 判断容器是否包含指定元素。                       |
+| **reduce(callback, initial)** | 执行归约计算。                                   |
+| **toArray()**                 | 将容器内的所有元素导出为原生 JavaScript 数组。   |
+
+### 指南
+
+在遍历的场景下，这些内置方法通常比 `Cursor` 快 20% ~ 50%，比 `for .. of` 快数倍。
+
+但由于控制权在容器手中，无法像操作游标那样在遍历中途随意“后退”或来回跳转。如果需要细粒度的控制，请使用 [**Cursor**](/protocols/cursor/)。
+
+要注意，这些内置方法是纯同步的，无法在回调内部使用 `await`。
+
+## 变体
+
+### Internal-Map-Iterable
+
+对于键值对容器（形如 SortedMap / SortedMultimap），用户更可能希望获得 `[K, V]` 的结构。
+
+在 `InternalIterable` 的基础上，这一变体接口的回调将键和值拆开传递，即 `(value, key, index)`。
+
+对于返回值是数组的方法，将会返回 `Array<[K, V]>` 的结构。
+
+另外，该变体额外提供了一个 `findNode(predicate)` 方法，它会在命中条件时返回一个 `[K, V]` 结构，而标准的 `find` 方法仅返回 `Value`。
+
+## 接口
+
+容器只要实现 `length` 和 `_traverse` 方法。
+
+<Tabs>
+  <TabItem label="Internal-Iterable">
+  
+```typescript
+abstract class InternalIterable<T> {
+  abstract get length(): number;
+
+  abstract _traverse(callback: (val: T, index: number) => boolean | void): void;
+}
+```
+
+  </TabItem>
+  <TabItem label="Internal-Map-Iterable">
+  
+```typescript
+abstract class InternalMapIterable<K, V> {
+  abstract get length(): number;
+
+  abstract _traverse(callback: (value: V, key: K, index: number) => boolean | void): void;
+}
+```
+  
+  </TabItem>
+</Tabs>
+
+
+
+如果回调函数显式返回 `true`，则 `_traverse` 必须立即停止遍历。

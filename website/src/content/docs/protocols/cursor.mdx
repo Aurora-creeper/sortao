@@ -1,0 +1,173 @@
+---
+title: Cursor
+description: SortAO 的双向访问游标与迭代协议。
+sidebar:
+  order: 1
+---
+
+import { Badge } from '@astrojs/starlight/components';
+
+import { Card } from '@astrojs/starlight/components';
+
+`Cursor` 是 SortAO 中用于遍历和访问容器的底层接口。与 JavaScript 原生的 `Iterator` 相比，`Cursor` 支持双向移动，并旨在减少迭代过程中的对象分配开销。游标的设计很大程度上受到了 C++ STL 标准库风格的影响，但也具有 JavaScript 风味。
+
+在 SortAO 的高性能容器中，游标是访问元素的精细方式。
+
+- [基础游标](#基础游标)
+- [指南](#指南)
+
+## 基础游标
+
+所有的游标都实现以下基础接口：
+
+```typescript
+interface Cursor<T> {
+  readonly index: number;        // 指向的元素的排名
+  readonly value: T | undefined; // 当前位置的值
+
+  readonly state: 0 | 1 | 2;     // 游标状态
+  readonly active: boolean;      // 游标是否抵达边界
+
+  next(): boolean; // 移动到下一个元素
+  prev(): boolean; // 移动到上一个元素
+  clone(): this;   // 克隆当前游标
+
+  advance(offset: number): boolean; // 相对当前位置移动，允许负值
+  refresh?(): boolean;              // 刷新游标排名
+}
+```
+
+要注意，游标的 `index` 是一个历史快照，不会自动随容器变化而更新。
+
+并非所有数据结构的游标都支持 `refresh` 方法用于在突变后恢复状态。
+
+### 使用示例
+
+```typescript
+const cur = container.cursor();
+while (cur.active) {
+  console.log(cur.value);
+  cur.next();
+}
+```
+
+游标的设计较为复杂，为了安全、正确地使用游标，请详细阅读 [指南](#指南)。
+
+### 随机访问游标
+
+针对支持快速寻址的容器，它们提供一个随机访问游标，具有更多方法。
+
+```typescript
+export interface RandomAccessCursor<T> extends Cursor<T> {
+  seek(index: number): boolean;     // 跳转到指定索引
+}
+```
+
+### 可变游标
+
+支持就地修改的游标。
+
+```typescript
+export interface MutableCursor<T> extends Cursor<T> {
+  set(value: T): void; // 修改当前游标指向的元素
+}
+```
+
+## 指南
+
+### 何时使用 Cursor？
+
+只在需要细粒度的查询时使用。
+
+Cursor 提供了比常规迭代器更灵活、高效的接口。由于 Cursor 持有数据结构内部的特殊索引，具有更多精细信息。对于 `next()` `prev()` 操作通常只需移动内部指针，可以大量降低寻址成本，提升效率。
+
+尽管 Cursor 提供了灵活的手动遍历能力，但在全局遍历时，其效率总要低于 [Internal-Iterable](/protocols/internal-iterable/)。因为 Cursor 的每一次移动都涉及失效判断与方法调用，而 `InternalIterable` 的实现方式更利于 JIT 优化。
+
+如果确定需要使用游标，请完整地阅读以下指南，以避免错误。
+
+### 游标失效
+
+当对容器执行突变操作（如 `insert`, `delete`, `push`, `pop` 等）时，底层的内存块可能会变化，导致：
+
+- 游标内部的物理指针可能已经指向错误的逻辑位置，或是被废弃的区域。
+- 在容器结构变更后继续使用旧游标，可能导致跳过元素、产生脏读或抛出底层异常。
+
+<Badge text="重要" variant="note" size="medium"/> 游标 **不会** 也无法在容器发生结构性变更时自动同步或进行恢复，更无法说明自己是否失效。
+
+因此在执行可能改变容器构性的操作后，**总是记得考虑是否需要废弃旧游标，并重新获取**。
+
+对于不同的数据结构，游标失效的范围是不同的，详细的情况请参考 [游标失效](../cursor-invalidation) 页面。
+
+### 状态
+
+游标的 `state` 用于表示游标的状态，有三种可能的值：
+
+|值|含义|枚举量|
+|:---:|:---|:---|
+|0| 游标认为自己有效。 | `CursorState.active` |
+|1| 游标已越界，指向容器的尾部。 | `CursorState.end` |
+|2| 游标已越界，指向容器的头部。 | `CursorState.rend` |
+
+`active` 是一个语法糖，总是返回 `state === 0` 表达式的值，表示游标有无越界。
+
+### 排名
+
+游标的 `index` 属性表示游标指向的元素的排名，它是历史快照，不会随容器的突变而变化。
+
+在容器非空时，容器的 index 序列可以表示为：[**-1(rend)**, 0, 1, ... , length - 1, **length(end)**]
+
+在容器为空时，容器的 index 序列可以表示为：[**-1(rend)**, **0(end)**]
+
+### 越界状态
+
+
+为了安全地支持半开区间遍历与索引算术，游标在抵达边界时会遵循以下规则：
+
+<Card title="1. 越界状态">
+
+游标的 `state` 属性为 1 或 2 时，表示当前未指向任何有效元素，当且仅当：
+
+- 在容器为空时获取游标，其 `state` 为 1。
+- 使用 `next()` 移动出容器逻辑范围时，`state` 变为 1;
+- 使用 `prev()` 移动出容器逻辑范围时，`state` 变为 2; 
+- 使用 `advance()` 或 `seek()` 跳转到越界位置时，`state` 根据方向变为 1 或 2;
+- 使用 `refresh()` 时，
+  - 若目前 `state` 为 1，将 index 更新为 length;
+  - 若目前 `state` 为 2，将 index 更新为 -1;
+  - 若游标失效，`state` 变为 1，将 index 变为 length。
+
+</Card>
+
+<Card title="2. 状态恢复">
+
+游标可以从越界状态恢复。
+
+- 当游标处于尾部越界状态，即 `state === 1` 时，调用 `prev()` 将使其重新指向并返回到容器**目前**的最后一个元素。
+- 当游标处于头部越界状态，即 `state === 2` 时，调用 `next()` 将使其重新指向并返回到容器**目前**的第一个元素。
+
+</Card>
+
+### 刷新
+
+由于 `index` 是静态快照，游标的 `index` 在容器的突变操作后不总是正确。
+
+**`seek(idx)`** 是按业务逻辑刷新游标状态的通用方式。
+  * 当容器发生突变，不论游标有没有失效，都可以使用 `seek(idx)` 重新定位到指定索引位置。
+  * 效率不会慢于按排名查询。
+
+**`refresh?()`** 是针对非失效游标的刷新方式，**只有部分数据结构支持**。
+  * 当容器发生突变，而游标没有失效时，可以使用 `refresh()` 方法刷新游标。
+  * 它会利用内部指针更新 `index`，并返回 `true`。
+  * 若内部指针失效，返回 `false`，并将游标刷新为尾部越界状态。
+  * 效率不会慢于按排名查询。
+  * 目前支持的数据结构有：SplayTree
+
+
+## 常见问题
+
+1. 在游标失效时，代码不应该访问 `index` 或 `value`。
+
+2. 在 `active` 为 `false` 时，代码不应该访问 `value`，**不过**   
+   `index` 将保持为 -1 或旧的 length，这可以用于特定情况下，旧排名的数值计算。
+
+3. `index`, `state` 总是历史快照，而 `value` 是根据内部指针实时获取的。

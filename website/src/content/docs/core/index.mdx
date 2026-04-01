@@ -1,0 +1,84 @@
+---
+title: SortAO 是什么？
+description: 快速上手。
+sidebar:
+  order: 1
+---
+
+import { Code } from "@astrojs/starlight/components";
+
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+
+SortAO 是一个基于 TypeScript 的算法库，它提供了大量有趣的算法与数据结构，且具有极高的效率。最值得关注的是招牌**包装器**，它们开箱即用，可以帮助您快速实现一个有序的 Set 与 Map。
+
+- [Sorted-Map](../associative/sorted-map/)，[Sorted-Set](../associative/sorted-set/)，[Sorted-Multimap](../associative/sorted-multimap/)，[Sorted-Multiset](../associative/sorted-multiset/)
+
+请使用您喜欢的包管理器安装 SortAO：
+
+
+<Tabs>
+
+  <TabItem label="npm">
+
+export const from_npm = `npm install sortao`;
+
+<Code code={from_npm} lang="bash" />
+
+  </TabItem>
+  <TabItem label="pnpm">
+
+export const from_pnpm = `pnpm add sortao`;
+
+<Code code={from_pnpm} lang="bash" />
+
+  </TabItem>
+  <TabItem label="yarn">
+
+export const from_yarn = `yarn add sortao`;
+
+<Code code={from_yarn} lang="bash" />
+
+  </TabItem>
+</Tabs>
+
+## 为什么选择 SortAO
+
+SortAO 是一个开放、便捷、灵活、高效的选择。
+
+### 灵活的底层容器
+
+类似 C++ 标准库的设计，SortAO 的包装器可以替换底层容器，以此来获得不同的特殊能力：
+
+- [Sorted-Block-Array](../sorted-blocks/sorted-block-array/) 默认容器，较为平衡。
+- [Sorted-Block-List](../sorted-blocks/sorted-block-list/) 在 *O*(1) 的时间内查询排名为 *K* 的元素，访问效率与原生数组严格一致。
+- [Sorted-Block-Deque](../sorted-blocks/sorted-block-deque/) 在 *O*(1) 的时间内查询排名为 *K* 的元素，且在极值附近的操作效率极高。
+- [SplayTree](../specialized/splay-tree/) 根据业务热点，自动优化访问元素的效率。
+
+还可以通过实现 **SortedKernel** 接口，针对性地使用自己的底层容器，来应付不同的业务需求。
+
+最重要的是，这些精心设计的数据结构都是可独立使用的，并不依赖于包装器。
+
+### 游标
+
+受 C++ 标准库的设计启发，我们设计了双向游标，可以高效地访问容器中的元素。
+
+- [Cursor](../protocols/cursor/)
+- [游标失效](../protocols/cursor-invalidation/)
+
+在中、大规模的数据下，游标的效率与原生迭代器一致，且支持 **更细粒度** 的访问控制。  
+对于全量遍历，我们的数据结构还实现了 [Internal-Iterable](../protocols/internal-iterable/)，可以获得高于原生迭代器的性能。
+
+为了性能起见，JavaScript 命名风格的函数返回容器内的值，而 C++ 命名风格的函数才会返回游标。
+
+### 零食供应
+
+我们还提供了一些有趣、独立的数据结构，尽管无法配合包装器，它们可能会在其他业务中帮到你。
+
+
+
+
+
+## 下一步
+
+- [急用！开箱即用](../core/usage/)
+- [最佳选择？了解不同容器的特性](../core/solution/)

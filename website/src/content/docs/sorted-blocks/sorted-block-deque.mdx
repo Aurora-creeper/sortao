@@ -1,0 +1,98 @@
+---
+title: Sorted-Block-Deque<T>
+description: 支持双端 O(1) 弹出与严格 O(1) 排名查询的有序分块队列。
+sidebar:
+  order: 3
+---
+
+`SortedBlockDeque` 是一种具有 *O*(1) 随机访问能力的有序容器。它完全是一个 [Block-Deque](../../more/block-deque/) 的包装器，通过牺牲一部分插入性能，换取了在有序集合中快速的 Rank（按排名）查询能力。
+
+它可以被视作更强大的双端优先队列，支持：
+- 严格的 *O*(1) 排名寻址（但吞吐量略低于 Block-List，约为原生数组的 3/4）。
+- 严格的 *O*(1) 最大值/最小值弹出操作。
+- 在靠近两端的较大范围内，具有非常高效的插入/删除性能。
+
+## 声明
+
+```typescript
+export class SortedBlockDeque<T> extends InternalIterable<T> 
+       implements SortedKernel<T, BlockDequeCursor<T>> 
+```
+
+## 成员函数
+
+### 构造函数
+
+| 方法 | 描述 |
+| :--- | :--- |
+| **constructor(compareFn?, blockSize = 512)** | 构造一个新的实例。`compareFn` 定义元素的排序规则（默认升序）。`blockSize` 是内部物理块的推荐容量。 |
+
+### 修改器
+
+| 方法 | 描述 | 复杂度 |
+| :--- | :--- | :--- |
+| **insert(value)** | 将元素插入到正确的有序位置。 | *O*(*B* + *N*/*B*) |
+| **insertMany(values)** | 批量插入。内部会先对输入进行排序以优化物理分配。 | *O*(*K* log *K* + *K* · (*B* + *N*/*B*)) |
+| **delete(value)** | 查找并删除**第一个**匹配的元素。返回是否成功。 | *O*(*B* + *N*/*B*) |
+| **deleteAt(index)** | 删除指定排名的元素。 | *O*(*B* + *N*/*B*) |
+| **deleteCursor(cur)**| 删除游标指向的元素。 | *O*(*B* + *N*/*B*)  |
+| **shift()** | 移除并返回首个元素（即最小值）。     | *O*(1) |
+| **pop()**   | 移除并返回最后一个元素（即最大值）。 | *O*(1) |
+
+### 元素搜索
+
+| 方法 | 描述 | 复杂度 |
+| :--- | :--- | :--- |
+| **lower_bound(value)** | 返回指向第一个**不小于**给定值的游标。 | *O*(log *N*) |
+| **upper_bound(value)** | 返回指向第一个**大于**给定值的游标。 | *O*(log *N*) |
+| **lowerBound(value)** | 返回第一个不小于给定值的逻辑排名 (Rank)。 | *O*(log *N*) |
+| **upperBound(value)** | 返回第一个大于给定值的逻辑排名 (Rank)。 | *O*(log *N*) |
+| **equal_range(value)** | 返回 `[lower_bound, upper_bound]` 的游标元组。 | *O*(log *N*) |
+| **indexOf(value)** | 返回指定值第一次出现的排名，不存在则返回 -1。 | *O*(log *N*) |
+| **lastIndexOf(value)** | 返回指定值最后一次出现的排名，不存在则返回 -1。 | *O*(log *N*) |
+| **includes(value)** | 判断是否包含指定值。 | *O*(log *N*) |
+
+### 异构搜索
+
+允许使用 `Key` 来搜索元素对象如 `{k, v}`，避免创建临时对象。被所有包装器使用。
+
+| 方法 | 描述 | 复杂度 |
+| :--- | :--- | :--- |
+| **lower_bound_key(key, compare)** | 传入自定义比较器，返回对应的下界游标。 | *O*(log *N*) |
+| **upper_bound_key(key, compare)** | 传入自定义比较器，返回对应的上界游标。 | *O*(log *N*) |
+| **lowerBoundKey / upperBoundKey** | 传入自定义比较器，返回对应的逻辑排名。 | *O*(log *N*) |
+
+### 访问与排名
+
+| 方法 | 描述 | 复杂度 |
+| :--- | :--- | :--- |
+| **at(index)** | 访问指定排名的元素，支持负数索引。 | *O*(1) |
+| **get(index)** / **kth(index)** | 访问指定排名的元素。或返回 undefined。 | *O*(1) |
+| **rank(value)** | 返回严格小于给定值的元素个数（即 `lowerBound`）。 | *O*(log *N*) |
+| **min() / max()** | 获取集合中的最小值或最大值。 | *O*(1) |
+
+### 容量与状态
+
+| 方法 | 描述 | 复杂度 |
+| :--- | :--- | :--- |
+| **length** | 返回元素总数。 | *O*(1) |
+| **capacity** | 返回当前对象池能容纳的最大元素数。 | *O*(1) |
+| **isEmpty()** | 检查容器是否为空。 | *O*(1) |
+| **reserve(n)** | 预分配物理块。 | *O*(*N*/*B*) |
+| **rebase(newBlockSize?)** | 重组存储块。修改 *B* 值。 | *O*(*N*) |
+| **clear(reuse = true)** | 清空容器。 | *O*(1) 或 *O*(*N*) |
+
+### 迭代器与访问
+
+| 方法 | 描述 |
+| :--- | :--- |
+| **cursor(index = 0)** | 返回一个指向指定逻辑排名的双向随机访问游标。 |
+| **\[Symbol.iterator\]()** | 默认的 ES6 迭代器。 |
+
+## 继承的方法
+
+该类继承自 [Internal-Iterable](../../protocols/internal-iterable)。
+
+## 补充资料
+
+这一数据结构的具体结构为 `Deque<Deque>`，也是算法竞赛中处理动态结构时最经典的块状数组实现。

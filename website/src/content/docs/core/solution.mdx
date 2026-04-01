@@ -1,0 +1,74 @@
+---
+title: 解决方案
+description: 解决方案。
+sidebar:
+  order: 3
+---
+
+import { Badge } from "@astrojs/starlight/components";
+
+import { Card } from "@astrojs/starlight/components";
+
+import { LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+选择合适的容器是一件难事！
+
+在默认情况下，SortAO 采用 [Sorted-Block-Array](../../sorted-blocks/sorted-block-array/) 作为底层容器，但这也许并不是最优选择。
+
+SortAO 目前提供了两类容器：
+
+- [Block 系列](#block-系列)
+- [树形结构](#树形结构)
+
+## Block 系列
+
+Block 系列的容器适用于中型数据（不超过 1,000,000 元素）。
+
+可用于包装器的**有序容器**，包括：
+
+- [Sorted-Block-Array](../../sorted-blocks/sorted-block-array/)，默认选项。
+- [Sorted-Block-List](../../sorted-blocks/sorted-block-list/)
+- [Sorted-Block-Deque](../../sorted-blocks/sorted-block-deque/)
+
+更底层地，它们对应的无序容器包括：
+
+- [Block-Array](../more/block-array/)
+- [Block-List](../more/block-list/)
+- [Block-Deque](../more/block-deque/)
+
+### 特性
+
+Block 系列容器服务于中型数据，算法的性能偏向于查询，能为 **不平衡的性能模式** 提供可能。
+
+对于突变操作（插入与删除），这些容器的复杂度均为 *O*(*B* + *N*/*B*)，但常数因子有所不同。  
+对于查询操作，这些容器的算法可以通过增大插入的常数因子，以此降低查询的复杂度量级。
+
+- [Sorted-Block-Array](../../sorted-blocks/sorted-block-array/) 是最通用的结构，它平衡了访问与插入的性能。  
+  在 500,000 元素的数据量下，其查询效率为原生数组的 1/2。
+
+- [Sorted-Block-List](../../sorted-blocks/sorted-block-list/) 能在严格 *O*(1) 的时间内查询排名为 *K* 的元素，效率总是原生数组一致。  
+  由于维护了更严格的物理块大小，其突变操作的效率低于前者。
+
+- [Sorted-Block-Deque](../../sorted-blocks/sorted-block-deque/) 大幅度提高了在极值处附近（较大范围）的突变操作效率。  
+  在 500,000 元素的数据量下，其查询效率为原生数组的 3/4。
+
+与常见的树形结构不同，它们的底层采用了更加连续的内存结构，因此对于中型数据，可以更好地利用 CPU 缓存，并更可能受到 JIT 的优化，性能往往更好（尤其是查询效率）。
+
+:::note
+*B* 的取值可以自行设置，应当在 16 到 1024 之间（尽可能为 2 的整数次幂）。  
+您可以估计极限数据量 *N*，使用约 sqrt(*N*) ~ 2 sqrt(*N*) 作为 *B* 的值，不必动态调整。
+:::
+
+<p>
+
+</p>
+
+### 游标失效
+
+Block 容器类似 C++ STL 的 vector，在插入/删除元素时，会导致游标失效的情况出现，且范围较大。
+
+您可以阅读 [Cursor](../../protocols/cursor/) 来了解有关游标的更多信息。
+
+由于 Block 容器的游标失效场景有些细微的不同，详情可以参阅 [游标失效](../../protocols/cursor-invalidation/) 页面。
+
+## 树形结构

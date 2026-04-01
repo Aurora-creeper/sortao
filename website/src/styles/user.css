@@ -1,0 +1,8 @@
+.matrix-section {
+  margin-top: 5em;
+}
+
+.matrix-section .title {
+  font-size: var(--sl-text-h2);
+  line-height: var(--sl-line-height-headings);
+}

@@ -1,0 +1,132 @@
+/* website/src/styles/custom.css */
+
+/* Dark mode colors (Your provided values) */
+:root {
+  --sl-color-accent-low: #152538;
+  --sl-color-accent: #2f6ab2;
+  --sl-color-accent-high: #b6cbe5;
+  --sl-color-white: #ffffff;
+  --sl-color-gray-1: #ececf9;
+  --sl-color-gray-2: #c0c0d0;
+  --sl-color-gray-3: #8888a5;
+  --sl-color-gray-4: #555570;
+  --sl-color-gray-5: #36354e;
+  --sl-color-gray-6: #25243b;
+  --sl-color-black: #171722;
+}
+
+/* Light mode colors (Your provided values) */
+:root[data-theme="light"] {
+  --sl-color-accent-low: #c9d8ec;
+  --sl-color-accent: #316cb4;
+  --sl-color-accent-high: #1a3352;
+  --sl-color-white: #171722;
+  --sl-color-gray-1: #25243b;
+  --sl-color-gray-2: #36354e;
+  --sl-color-gray-3: #555570;
+  --sl-color-gray-4: #8888a5;
+  --sl-color-gray-5: #c0c0d0;
+  --sl-color-gray-6: #ececf9;
+  --sl-color-gray-7: #f5f6fc;
+  --sl-color-black: #ffffff;
+}
+
+.sl-markdown-content {
+  /* font-size: 0.875rem !important; */
+  font-size: var(--sl-text-sm);
+  /* line-height: 1.5 !important; */
+  color: var(--sl-color-text) !important;
+}
+
+/* 标题样式：使用变量 */
+.sl-markdown-content h1 {
+  /* font-size: 1.8rem !important; */
+  font-size: var(--sl-text-h5);
+  font-weight: normal !important;
+  color: var(--sl-color-white) !important;
+}
+
+.sl-markdown-content .sl-heading-wrapper.level-h1 {
+  font-size: var(--sl-text-h3);
+  --sl-anchor-icon-gap: 0.7em;
+}
+
+.sl-markdown-content h2 {
+  /* font-size: 1.3rem !important; */
+  font-size: var(--sl-text-h5);
+  border-bottom: 1px solid var(--sl-color-gray-5) !important;
+  padding-bottom: 2px !important;
+  margin-top: 2rem !important;
+  font-weight: bold !important;
+  color: var(--sl-color-white) !important;
+}
+
+.sl-markdown-content .sl-heading-wrapper.level-h2 {
+  font-size: var(--sl-text-h3);
+  --sl-anchor-icon-gap: 0.7em;
+}
+
+.sl-markdown-content h3 {
+  /* font-size: 1.8rem !important; */
+  font-size: var(--sl-text-h5);
+  /* font-weight: normal !important; */
+  /* color: var(--sl-color-white) !important; */
+}
+
+.sl-markdown-content .sl-heading-wrapper.level-h1 {
+  font-size: var(--sl-text-h5);
+  --sl-anchor-icon-gap: 0.7em;
+}
+
+/* 表格：极致还原 cppreference 但适配主题 */
+.sl-markdown-content table,
+.home-matrix table {
+  display: table !important;
+  width: 100% !important;
+  border-collapse: collapse !important;
+  border: 1px solid var(--sl-color-gray-5) !important;
+  background-color: var(--sl-color-bg) !important;
+  box-shadow: none !important;
+}
+
+.sl-markdown-content th,
+.home-matrix th {
+  background-color: var(--sl-color-gray-6) !important;
+  color: var(--sl-color-text) !important;
+  border: 1px solid var(--sl-color-gray-5) !important;
+  padding: 4px 10px !important;
+  font-size: 0.85rem !important;
+}
+
+.sl-markdown-content td,
+.home-matrix td {
+  border: 1px solid var(--sl-color-gray-5) !important;
+  padding: 6px 12px !important;
+  color: var(--sl-color-text) !important;
+}
+
+.api-name a {
+  font-family: var(--__sl-font-mono) !important;
+  font-weight: 700 !important;
+  color: var(--sl-color-text-accent) !important;
+  text-decoration: none;
+}
+.api-name a:hover {
+  text-decoration: underline;
+}
+
+.home-matrix {
+  max-width: 1000px;
+  margin: 2rem auto !important;
+}
+
+.matrix-section h2 {
+  text-align: left !important;
+  border: none !important;
+}
+
+.complexity-tag {
+  font-size: 0.75rem !important;
+  color: var(--sl-color-gray-3) !important;
+  font-style: italic !important;
+}

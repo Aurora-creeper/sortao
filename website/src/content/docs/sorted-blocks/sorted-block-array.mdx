@@ -1,0 +1,123 @@
+---
+title: Sorted-Block-Array<T>
+description: 始终保持有序的高性能分块矢量容器。
+sidebar:
+  order: 1
+---
+
+`SortedBlockArray` 是一种始终保持内部元素有序的容器。它使用了与 [Block-Array](../../more/block-array/) 相同的底层结构，但在所有修改操作中自动维护顺序。它提供了 *O*(log *N*) 的搜索效率，并具有不错的插入/删除性能。
+
+## 声明
+
+```typescript
+export class SortedBlockArray<T> extends BlockArrayBase<T>
+       implements SortedKernel<T, SortedBlockArrayCursor<T>>;
+```
+
+## 成员函数
+
+### 构造函数
+
+| 方法                                         | 描述                                                                                  |
+| :------------------------------------------- | :------------------------------------------------------------------------------------ |
+| **constructor(compareFn?, blockSize = 512)** | 构造一个新的实例。`compareFn` 定义元素的排序规则（默认升序）。`blockSize` 是内部物理块的推荐容量。 |
+
+### 修改器
+
+| 方法 | 描述 | 复杂度 |
+| :--- | :--- | :--- |
+| **insert(value)** | 将元素插入到正确的有序位置。 | *O*(*B* + *N*/*B*) |
+| **insertMany(values)** | 批量插入。内部会先对输入进行排序以优化物理分配。 | *O*(*K* log *K* + *K* · (*B* + *N*/*B*)) |
+| **delete(value)** | 查找并删除**第一个**匹配的元素。返回是否成功。 | *O*(*B* + *N*/*B*) |
+| **deleteAt(index)**  | 删除指定排名的元素。 | *O*(*B* + *N*/*B*) |
+| **deleteCursor(cur)**| 删除游标指向的元素。 | *O*(*B* + *N*/*B*)  |
+| **shift()** | 移除并返回首个元素（即最小值）。     | *O*(*B* + *N*/*B*) |
+| **pop()**   | 移除并返回最后一个元素（即最大值）。 | *O*(*1*) |
+
+### 元素搜索
+
+| 方法 | 描述 | 复杂度 |
+| :--- | :--- | :--- |
+| **lower_bound(value)** | 返回指向第一个**不小于**给定值的游标。 | *O*(log *N*) |
+| **upper_bound(value)** | 返回指向第一个**大于**给定值的游标。 | *O*(log *N*) |
+| **lowerBound(value)** | 返回第一个不小于给定值的逻辑排名 (Rank)。 | *O*(log *N*) |
+| **upperBound(value)** | 返回第一个大于给定值的逻辑排名 (Rank)。 | *O*(log *N*) |
+| **equal_range(value)** | 返回 `[lower_bound, upper_bound]` 的游标元组。 | *O*(log *N*) |
+| **indexOf(value)** | 返回指定值第一次出现的排名，不存在则返回 -1。 | *O*(log *N*) |
+| **lastIndexOf(value)** | 返回指定值最后一次出现的排名，不存在则返回 -1。 | *O*(log *N*) |
+| **includes(value)** | 判断是否包含指定值。 | *O*(log *N*) |
+
+### 异构搜索
+
+允许使用 `Key` 来搜索元素对象如 `{k, v}`，避免创建临时对象。被所有包装器使用。
+
+| 方法 | 描述 | 复杂度 |
+| :--- | :--- | :--- |
+| **lower_bound_key(key, compare)** | 传入自定义比较器，返回对应的下界游标。 | *O*(log *N*) |
+| **upper_bound_key(key, compare)** | 传入自定义比较器，返回对应的上界游标。 | *O*(log *N*) |
+| **lowerBoundKey / upperBoundKey** | 传入自定义比较器，返回对应的逻辑排名。 | *O*(log *N*) |
+
+### 访问与排名
+
+| 方法 | 描述 | 复杂度 |
+| :--- | :--- | :--- |
+| **at(index)** | 访问指定排名的元素，支持负数索引。 | *O*(1) 或 *O*(log *N*) |
+| **get(index)** / **kth(index)** | 访问指定排名的元素。或返回 undefined。 | *O*(1) 或 *O*(log *N*) |
+| **rank(value)** | 返回严格小于给定值的元素个数（即 `lowerBound`）。 | *O*(log *N*) |
+| **min() / max()** | 获取集合中的最小值或最大值。 | *O*(1) |
+
+### 容量与状态
+
+| 方法 | 描述 | 复杂度 |
+| :--- | :--- | :--- |
+| **length** | 返回元素总数。 | *O*(1) |
+| **isEmpty()** | 检查容器是否为空。 | *O*(1) |
+| **rebase(newBlockSize?)** | 重组存储块。修改 *B* 值。并使满足 `Uniform` 条件。 | *O*(*N*) |
+| **clear(reuse = true)** | 清空容器。 | *O*(1) |
+
+此外，虽然这一数据结构提供了 `capacity`，`reserve()`，`shrinkToFit()` 属性或方法，但由于底层实现，物理容量 `capacity` 与 `length` 总是相同，且其余两个方法总是无效，因此请避免使用。
+
+### 迭代器与访问
+
+| 方法 | 描述 |
+| :--- | :--- |
+| **cursor(index = 0)** | 返回一个指向指定逻辑排名的双向随机访问游标。 |
+| **\[Symbol.iterator\]()** | 默认的 ES6 迭代器。 |
+
+:::tip[性能说明]
+- 建议在性能敏感场景下使用 `forEach()` 等由 [Internal-Iterable](../../protocols/internal-iterable/) 提供的方法。
+:::
+
+## 继承的方法
+
+该类继承自 [Internal-Iterable](../../protocols/internal-iterable)。
+
+## 补充资料
+
+**isUniform**
+
+在 `isUniform` 条件下，`SortedBlockArray` 的寻址性能与原生数组一致。  
+关于其详细的描述可以在 [BlockArray](../../more/block-array/) 中找到。
+
+**寻址效率**
+
+在非 `isUniform` 条件下，`SortedBlockArray` 的寻址复杂度为 *O*(log *N*)。  
+更精细地，其效率可以表示为 *O*(log *B* + log *N*/*B*)。
+
+**插入效率**
+
+理论上，插入效率为 *O*(*B* + *N*/*B*)，但 *B* 部分的代价一定可以受到 `memmove` 的加速。  
+
+在 Word-RAM model 下，其效率可以表示为 *O*(*B*/*w* + *N*/*B*)，这里的 *w* 是一个 4 到 64 的常数。  
+因此，选择一个适当大的 *B* 可以获得更高的插入效率，还可以更好地利用连续内存的缓存优势。
+
+物理块最优取值往往在 sqrt(*N*) ~ 2 sqrt(*N*) 之间，根据内部实现，*B* 的推荐值约为 sqrt(*N*)。
+
+|不超过| *B* 的推荐值|
+|---|---|
+| 10, 000 | 128 |
+| 50, 000 | 256 |
+| 500, 000 | 512 |
+| 1, 000, 000 | 1024 ~ 512 * |
+
+\* 由于储存的元素类型不同，最好根据具体业务进行测试。

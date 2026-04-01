@@ -1,0 +1,53 @@
+---
+title: SortAO
+description: 简洁、强大、高效的 TypeScript 有序集合库。
+template: splash
+hero:
+  tagline: 您的 TypeScript 有序容器套件，还支持按需切换底层容器。
+  image:
+    file: ../../assets/favicon.svg
+  actions:
+    - text: 快速开始
+      link: ./core/
+      icon: right-arrow
+    - text: GitHub
+      link: https://github.com/Aurora-creeper/sortao
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from "@astrojs/starlight/components";
+
+<div class="home-matrix">
+
+<section class="matrix-section">
+
+<h2 class="title">易于使用</h2>
+
+SortAO 提供了开箱即用的四个高级包装器。
+
+- [**Sorted-Map**](./associative/sorted-map/)：有序字典，键唯一。
+- [**Sorted-Set**](./associative/sorted-set/)：有序集合，值唯一。
+- [**Sorted-Multimap**](./associative/sorted-multimap/)：有序多重字典，允许重复键。
+- [**Sorted-Multiset**](./associative/sorted-multiset/)：有序多重集合，允许重复值。
+
+</section>
+
+<section class="matrix-section">
+
+<h2 class="title">灵活高效</h2>
+
+这些包装器可以替换底层容器！您可以根据业务的访问模式选择最合适的引擎。
+
+值得注意的是，这些内核容器可以单独使用，提供更底层的访问控制，便于根据业务逻辑进行优化。
+
+| 容器                                                                        | 特性                                   | 按排名查询  | 插入        |
+| :-------------------------------------------------------------------------- | :------------------------------------- | :---------- | :---------- |
+| <div class="api-name">[Sorted-Block-Array](./sorted-blocks/sorted-block-array/)</div> | 综合性能均衡，内存友好，默认选项。     | *O*(log *N*)  | *O*(*B* + *N*/*B*)  |
+| <div class="api-name">[Sorted-Block-List](./sorted-blocks/sorted-block-list/)</div>   | 查询效率与原生数组一致，兼顾插入效率。 | ***O*(1)**    | *O*(*N*/*B*)      |
+| <div class="api-name">[Sorted-Block-Deque](./sorted-blocks/sorted-block-deque/)</div> | 对于两端极值附近的操作，效率非常高。         | ***O*(1)**    | *O*(*N*/*B*)      |
+| <div class="api-name">[SplayTree](./tree/splay-tree/)</div>           | 自动优化局部热点数据。                 | *O*(log *N*) \* | *O*(log *N*) \* |
+
+</section>
+
+</div>

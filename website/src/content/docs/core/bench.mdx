@@ -1,0 +1,135 @@
+---
+title: 基准测试
+description: 基准测试
+# tableOfContents: false
+sidebar:
+  order: 4
+---
+
+import { Badge } from '@astrojs/starlight/components';
+
+基准测试在不同平台，不同 JS 引擎，不同内存配置，不同硬件下，结果总是会有所不同。
+
+下面的基准测试结果挑选了在波动中，容器性能相对较差的结果，可供参考。
+
+## 省流
+
+这里展示一些大家感兴趣的结果，以下在 500,000 元素下测试每秒的性能：
+
+在每秒中按下标访问：
+- 原生数组 ~23,000,000 次。
+- `BlockArray` 在 isUniform 条件下访问 ~19,000,000 次，否则 ~11,000,000 次。
+- `BlockList`  ~19,000,000 次。**(访问很快！)**
+- `BlockDeque`  ~16,000,000 次。
+
+在每秒中插入/删除（中部）：
+- 原生数组 ~4,500 次。
+- `BlockArray` ~1,100,000 次。**（非常均衡！）**
+- `BlockList` ~140,000 次。
+- `BlockDeque` ~110,000 次。
+
+在每秒中插入/删除（靠近头部约 600 个元素处）：
+- 原生数组 ~2,000 次。
+- `BlockArray` ~710,000 次。
+- `BlockList` ~75,000 次。
+- `BlockDeque` ~2,800,000 次。**(在两端很快！)**
+
+## Blocks
+
+### 按下标随机访问
+
+见 test/bench/flat-visit.bench.ts (N = 500,000)
+
+```bash frame="none"
+✓ test/bench/flat-visit.bench.ts > Flat Containers access Bench (N=500,000) > Tail Mutation (Push/Pop) 13787ms
+    name                     hz     min     max    mean     p75     p99    p995    p999     rme   samples
+  · Native Array  23,274,806.00  0.0000  0.1796  0.0000  0.0001  0.0001  0.0001  0.0002  ±0.33%  11637403
+  · BlockArray    19,049,952.00  0.0000  0.6768  0.0001  0.0001  0.0001  0.0002  0.0003  ±0.61%   9524976
+  · BlockArray.n  11,411,794.00  0.0000  0.4670  0.0001  0.0001  0.0002  0.0002  0.0004  ±0.32%   5705897
+  · BlockList     19,027,586.00  0.0000  0.8045  0.0001  0.0001  0.0001  0.0002  0.0002  ±0.47%   9513793
+  · BlockDeque    16,887,240.00  0.0000  0.4088  0.0001  0.0001  0.0001  0.0002  0.0004  ±0.52%   8443620
+```
+
+`BlockArray.n` 表示 `isUniform = false` 的情况。以原生数组的效率为单位：
+- BlockArray 和 BlockList 约为 4/5 倍；
+- BlockDeque 约为 3/4 倍；
+- BlockArray.n 约为 1/2 倍。
+
+此外，由于 `Sorted-` 容器是他们的包装器，因此按排名查询的效率总是一样的。
+
+### 突变
+
+见 test/bench/flat-mutation.bench.ts (*N* = 500,000)
+
+**尾部突变 (Push/Pop)**
+
+```bash frame="none"
+✓ test/bench/flat-mutation.bench.ts > Flat Containers Mutation Bench (N=500,000) > Tail Mutation (Push/Pop) 13123ms
+    name                     hz     min     max    mean     p75     p99    p995    p999     rme   samples
+  · Native Array  24,163,440.00  0.0000  0.1665  0.0000  0.0001  0.0001  0.0001  0.0001  ±0.23%  12081720
+  · BlockArray    21,959,519.61  0.0000  0.7863  0.0000  0.0001  0.0001  0.0001  0.0002  ±0.51%  10979762
+  · BlockList     21,431,529.71  0.0000  0.7739  0.0000  0.0001  0.0001  0.0001  0.0002  ±0.59%  10715767
+  · BlockDeque    20,859,851.83  0.0000  0.1410  0.0000  0.0001  0.0001  0.0001  0.0002  ±0.26%  10429928
+```
+
+<Badge text="评价" variant="note" /> 吞吐量基本与数组持平。
+
+----
+
+**头部突变 (Unshift/Shift)**
+
+```bash frame="none"
+✓ test/bench/flat-mutation.bench.ts > Flat Containers Mutation Bench (N=500,000) > Head Mutation (Unshift/Shift) 4660ms
+    name                     hz     min     max    mean     p75     p99    p995    p999     rme  samples
+  · Native Array       2,574.84  0.3026  1.0032  0.3884  0.4099  0.7055  0.8268  0.9086  ±1.02%     1288
+  · BlockArray       885,710.41  0.0010  0.5731  0.0011  0.0011  0.0014  0.0016  0.0062  ±0.36%   442856
+  · BlockList         86,653.13  0.0094  0.3526  0.0115  0.0118  0.0242  0.0279  0.0767  ±0.37%    43327
+  · BlockDeque    17,506,762.00  0.0000  0.2404  0.0001  0.0001  0.0001  0.0001  0.0002  ±0.33%  8753381
+```
+
+<Badge text="评价" variant="note" /> 以原生数组为单位，分别是 343、33、6796 倍。
+
+----
+
+**中部突变 (Insert/Delete at N/2)**
+
+```bash frame="none"
+✓ test/bench/flat-mutation.bench.ts > Flat Containers Mutation Bench (N=500,000) > Middle Mutation (Insert/Delete at N/2) 2594ms
+    name                    hz     min     max    mean     p75     p99    p995    p999     rme  samples
+  · Native Array      4,573.38  0.1644  0.8142  0.2187  0.2282  0.4382  0.4973  0.6832  ±1.05%     2287
+  · BlockArray    1,100,278.24  0.0007  1.1413  0.0009  0.0009  0.0015  0.0016  0.0032  ±0.64%   550140
+  · BlockList       140,515.66  0.0051  1.8340  0.0071  0.0067  0.0143  0.0179  0.0524  ±0.92%    70258
+  · BlockDeque      101,187.47  0.0077  0.2120  0.0099  0.0099  0.0172  0.0228  0.0641  ±0.35%    50594
+```
+
+<Badge text="评价" variant="note" /> 以原生数组为单位，分别是 340、30、22 倍。
+
+----
+
+**靠近头部突变 (Insert/Delete at index ~600)**
+
+```bash frame="none"
+✓ test/bench/flat-mutation.bench.ts > Flat Containers Mutation Bench (N=500,000) > Near Head Mutation (Insert/Delete at index 600) 3025ms
+    name                    hz     min     max    mean     p75     p99    p995    p999     rme  samples
+  · Native Array      2,017.28  0.3538  2.6648  0.4957  0.5458  0.8589  0.9205  1.0269  ±1.55%     1009
+  · BlockArray      717,047.13  0.0011  0.7922  0.0014  0.0014  0.0021  0.0024  0.0069  ±0.47%   358525
+  · BlockList        75,132.59  0.0106  0.4392  0.0133  0.0129  0.0239  0.0322  0.0691  ±0.36%    37567
+  · BlockDeque    2,821,178.31  0.0002  0.7511  0.0004  0.0004  0.0007  0.0007  0.0011  ±0.49%  1410590
+```
+
+<Badge text="评价" variant="note" /> 以原生数组为单位，分别是 355、37、1398 倍。
+
+----
+
+**靠近尾部突变 (Insert/Delete at N - ~600)**
+
+```bash frame="none"
+✓ test/bench/flat-mutation.bench.ts > Flat Containers Mutation Bench (N=500,000) > Near Tail Mutation (Insert/Delete at N - 600) 3828ms
+    name                    hz     min     max    mean     p75     p99    p995    p999     rme  samples
+  · Native Array  2,483,457.50  0.0003  0.8689  0.0004  0.0004  0.0006  0.0006  0.0014  ±0.55%  1241729
+  · BlockArray    3,375,713.04  0.0002  0.4293  0.0003  0.0003  0.0004  0.0005  0.0016  ±0.62%  1688585
+  · BlockList     2,121,567.58  0.0004  0.2408  0.0005  0.0005  0.0005  0.0006  0.0016  ±0.35%  1060784
+  · BlockDeque    1,943,682.00  0.0004  0.7937  0.0005  0.0005  0.0006  0.0008  0.0024  ±0.54%   971841
+```
+
+<Badge text="评价" variant="note" /> 差距不是特别大，BlockArray 总是最快。BlockList 和 BlockDeque 有一些额外的寻址开销。

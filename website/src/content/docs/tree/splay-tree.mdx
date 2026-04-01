@@ -1,0 +1,109 @@
+---
+title: SplayTree<K, Node>
+description: 具有局部热点优化能力的伸展树实现。
+sidebar:
+  order: 1
+---
+
+`SplayTree` 是一种自适应的平衡二叉搜索树（BST）。它的核心特性是：每当一个节点被访问（查找、插入或删除前），它会被自动旋转到树的根部。这种“伸展 (Splaying)”操作使得最近被频繁访问的数据能以 *O*(1) 的效率获取，非常适合处理具有**局部性原理**的数据。
+
+## 声明
+
+```typescript
+export class SplayTree<K, Node extends SplayNode<K, Node>> 
+       extends InternalIterable<K>
+       implements SortedKernel<K, SplayCursor<K, Node>>;
+```
+
+## 成员函数
+
+### 构造函数
+
+| 方法                                  | 描述                                            |
+| :------------------------------------ | :---------------------------------------------- |
+| **constructor(compareFn?, NodeCtor?)** | 构造一个新的 `SplayTree`。`compareFn` 为比较函数；`NodeCtor` 为自定义节点类的构造函数（默认为 `DefaultSplayNode`）。 |
+
+### 核心操作
+
+| 方法            | 描述                                         | 均摊复杂度 |
+| :-------------- | :------------------------------------------- | :------------ |
+| **insert(key)** | 插入一个值。并将其伸展至根。   | *O*(log *N*)      |
+| **findNode(key)**   | 查找一个值。将相关节点伸展至根。 | *O*(log *N*)      |
+| **delete(key)** | 删除指定值。返回值或 `undefined`。               | *O*(log *N*)      |
+| **deleteAt(index)** | 删除排名为 `index` 的元素。返回值或 `undefined`。 | *O*(log *N*) |
+| **deleteCursor(cur)** | 删除游标指向的节点。返回值或 `undefined`。 | *O*(log *N*) |
+
+### 统计与顺序操作
+
+这些方法要求用户在 `pushup()` 中正确维护了子树的 `size` 属性（默认节点已经为您实现）。
+
+| 方法                      | 描述                               | 均摊复杂度   |
+| :------------------------ | :--------------------------------- | :------- |
+| **rank(key)**             | 返回给定键的排名。      | *O*(log *N*) |
+| **kth(k)**                | 返回排名为 *K* 的节点上的值。 | *O*(log *N*) |
+| **kthNode(k)**            | 返回排名为 *K* 的节点。 | *O*(log *N*) |
+| **findMin() / findMax()** | 查找并伸展最小或最大节点至根。     | *O*(log *N*) |
+| **prev(key) / next(key)** | 查找前驱或后继节点并伸展至根。     | *O*(log *N*) |
+
+### 异构搜索
+
+允许使用 `Key` 来搜索元素对象如 `{k, v}`，避免创建临时对象。被所有包装器使用。
+
+| 方法 | 描述 | 复杂度 |
+| :--- | :--- | :--- |
+| **lower_bound_key(key, compare)** | 传入自定义比较器，返回对应的下界游标。 | *O*(log *N*) |
+| **upper_bound_key(key, compare)** | 传入自定义比较器，返回对应的上界游标。 | *O*(log *N*) |
+
+### 结构合并
+
+| 方法             | 描述                                              | 均摊复杂度        |
+| :--------------- | :------------------------------------------------ | :------------ |
+| **join(other)**  | 将另一个树（要求所有键均大于当前树）拼接到右侧。      | *O*(log *N*)      |
+| **merge(other)** | 通用的树合并操作。将 other 中的所有键插入当前树。 | *O*(*M* log(*N*+*M*)) |
+
+当使用 *N*.merge(*M*) 时，精细分析，若满足 *M* ≤ *N*，其均摊复杂度为 *O*(*M* log (*N*/*M* + 1))。
+
+
+
+## 使用示例
+
+以下是自订节点逻辑的示例：
+
+```typescript
+import { SplayNode } from "sortao"; // 导入样板代码
+
+class MyNode extends SplayNode<string, MyNode> {
+  size: number = 1;    // 自定义信息
+  pushup() {           // 维护你的信息
+    this.size = (this.left?.size ?? 0) + (this.right?.size ?? 0) + 1;
+  }
+}
+
+// undefined 表示使用默认比较函数
+const tree = new SplayTree<string, MyNode>(undefined, MyNode); 
+
+tree.insert('10');
+const node = tree.kth(0); // '10'
+```
+
+### 节点基类
+
+```ts
+export abstract class SplayNode<T, Node extends SplayNode<T, Node>> {
+  value: T;
+  parent: Node | null = null;
+  left: Node | null = null;
+  right: Node | null = null;
+  size: number = 1;
+
+  constructor(value: T) {
+    this.value = value;
+  }
+
+  abstract pushup(): void;
+}
+```
+
+## 继承的方法
+
+该类继承自 [Internal-Iterable](../../protocols/internal-iterable)。

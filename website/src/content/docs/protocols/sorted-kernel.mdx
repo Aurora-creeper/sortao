@@ -1,0 +1,108 @@
+---
+title: Sorted-Kernel
+description: Sorted-Kernel
+sidebar:
+  order: 4
+---
+
+`SortedKernel` 是 SortAO 的包装器为容器提供的接口。
+
+实现此接口的任何容器都可用作诸如 SortedMap 之类的高级关联容器的底层存储。
+
+## 声明
+
+```ts
+export interface SortedKernel<
+  T,
+  C extends RandomAccessCursor<T> = RandomAccessCursor<T>
+> extends InternalIterable<T>, Iterable<T> 
+```
+
+也就是说，任何 SortedKernel 都必须是：
+1. 原生可迭代的，见 MDN [Iteration_protocols](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Iteration_protocols)
+2. 内部可迭代的，见 [Internal-Iterable](../internal-iterable)
+3. 可按排名访问的
+
+## 接口
+
+以下的指南会详细介绍如何让容器实现 SortedKernel 接口。
+
+### 平凡的
+
+为了满足上述条件，SortedKernel 必须首先实现以下接口：
+
+```ts
+interface SortedKernel<T, C> {
+  readonly length: number;
+
+  [Symbol.iterator](): IterableIterator<T>;
+
+  clear(reuse?: boolean): void;
+}
+```
+
+- `length` 属性用于获取容器的长度。
+- `[Symbol.iterator]` 方法用于获取容器的迭代器。
+- `clear` 方法用于清空容器。`reuse` 参数可选，用于指示是否释放底层容器，允许该参数无效。
+
+### 游标
+
+返回一个对应排名的游标，如果没有指定索引，则返回 `index = 0` 时的游标。
+
+```ts
+interface SortedKernel<T, C> {
+  cursor(index?: number): C;
+}
+```
+
+### 突变
+
+```ts
+interface SortedKernel<T, C> {
+  insert(item: T): void;
+
+  deleteAt(index: number): T | undefined;
+
+  deleteCursor(cursor: Cursor<T>): T | undefined;
+}
+```
+
+- `insert` 方法用于插入一个元素。
+- `deleteAt` 方法用于删除指定排名的元素，并返回被删除的元素。
+- `deleteCursor` 方法用于删除指定游标指向的元素，并返回被删除的元素。若游标不处于 active 状态，则返回 undefined。**不必须** 判断游标失效。
+
+### 访问与查询
+
+```ts
+interface SortedKernel<T, C> {
+  get(index: number): T | undefined;
+
+  lower_bound_key<K>(key: K, compare: (item: T, key: K) => number): C;
+
+  upper_bound_key<K>(key: K, compare: (item: T, key: K) => number): C;
+}
+```
+
+- `get` 方法用于按排名访问。
+- `lower_bound_key` 方法用于异构查询，返回第一个满足 `compare(item, key) >= 0` 元素的游标。
+- `upper_bound_key` 方法用于异构查询，返回第一个满足 `compare(item, key) > 0` 元素的游标。
+
+在异构查询的实现中，你总是可以假定 `T` 与 `K` 的类型没有本质区别（在排序的意义上）。
+
+一个可能的实现如下，使用了二分查找：
+
+```ts
+function lower_bound_key<K>(key: K, compare: (item: T, key: K) => number): MyCursor<T> {
+  let L = 0, R = this.arr.length - 1;
+  while (L <= R) {
+    const mid = (L + R) >> 1;
+    if (compare(this.arr[mid], key) < 0) {
+      L = mid + 1;
+    } else {
+      R = mid - 1;
+    }
+  }
+
+  return this._make_cursor(L);
+}
+```

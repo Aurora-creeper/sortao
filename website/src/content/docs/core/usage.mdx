@@ -1,0 +1,287 @@
+---
+title: 快速上手
+description: 快速上手。
+sidebar:
+  order: 2
+---
+
+
+## 导入
+
+SortAO 无副作用，您可以直接从 `sortao` 导入您所希望的容器：
+
+```ts
+import { SortedSet } from "sortao";
+```
+
+## 基础用法
+
+SortAO 提供了与原生 ES6 集合极其相似的 API，但始终保持有序。以 [**Sorted-Set**](../../associative/sorted-set/) 为例。
+
+```ts
+import { SortedSet } from "sortao";
+
+const set = new SortedSet<number>();
+
+set.add(50).add(10).add(30);
+
+if (set.has(10)) {
+  console.log(set.toArray());  // [10, 30, 50]
+  console.log(set.min());      // 10
+  console.log(set.max());      // 50
+}
+```
+
+## 比较函数
+
+您可以自行传入比较函数，以便于控制排序逻辑。以下代码中的示例函数，是默认的比较函数。
+
+需要注意的是，你的函数必须能正确比较 `>`、`<` 和 `==` 三种情况。
+
+```ts
+import { SortedSet } from "sortao";
+
+function comp<T>(a: T, b: T) {
+  if (a > b) return 1;
+  else if (a < b) return -1;
+  return 0;
+}
+
+const set = new SortedSet<number>(comp);
+```
+
+## 排名与范围查询
+
+SortAO 提供了有趣的检索能力。以 [**Sorted-Multiset**](../../associative/sorted-multiset/) 为例。
+
+```ts
+import { SortedMultiset } from "sortao";
+
+const scores = new SortedMultiset<number>();
+
+scores.add(45)
+      .add(60).add(60).add(60) // Multiset 允许插入重复的值
+      .add(75)
+      .add(90);
+
+// 统计 60 的出现次数
+console.log(scores.count(60));  // 3
+
+// 查询排名 (即有多少值严格小于询问值)。排名从 0 开始。
+console.log([
+  scores.rank(10), scores.rank(45),  // 0, 0
+  scores.rank(60), scores.rank(61),  // 1, 4
+  scores.rank(90), scores.rank(91)   // 5, 6
+]);
+
+// 按排名查询。排名从 0 开始。
+console.log(scores.kth(0));     // 45
+console.log(scores.kth(1));     // 60
+console.log(scores.kth(3));     // 60
+```
+
+### 游标
+
+关于游标，详细文档请参见 [Cursor](../../protocols/cursor/) 页面。
+
+使用 JavaScript 风格命名的函数，如 `lowerBound`、`upperBound` 将会返回排名。  
+使用 C++ 风格命名的函数，如 `lower_bound`、`upper_bound`、`equal_range` 则会返回游标。  
+
+以 [**Sorted-Multimap**](../../associative/sorted-multimap/) 为例。
+
+```ts
+import { SortedMultimap } from "sortao";
+
+const users = new SortedMultimap<number, string>();
+
+users.add(10, "asahi")
+     .add(10, "luna")
+     .add(20, "resona");
+
+console.log(users.lowerBound(20));            // 2
+
+const cur = users.lower_bound(20);            // 返回一个游标
+console.log(cur.index, cur.key, cur.value);   // 2, 20, resona
+
+cur.prev();
+console.log(cur.index, cur.key, cur.value);   // 1, 10, luna
+
+cur.prev();
+console.log(cur.index, cur.key, cur.value);   // 0, 10, asahi
+```
+
+### equal_range
+
+`equal_range` 返回两个游标，表示 **左闭右开** `[start, end)` 的范围。
+
+```ts
+// 接着上面的例子
+const [start, end] = users.equal_range(10);
+
+console.log(start.index); // 0 (指向第一个 10)
+console.log(end.index);   // 2 (指向最后一个 10 的下一个位置)
+
+console.log(`含有 ${end.index - start.index} 个元素`); // 2
+
+while (start.index < end.index) { // 遍历
+  console.log(start.key, start.value);
+  start.next();
+}
+
+  // 输出:
+  // 10 "asahi"
+  // 10 "luna"
+```
+
+关于游标，详细文档请参见 [Cursor](../../protocols/cursor/) 页面。
+
+
+## Multi 容器的表现
+
+对于相同值，Multi 容器的表现是一个队列（FIFO）  
+当插入相同值时，新插入的元素总是在最后。当删除相同值时，总是删除最早插入的元素。
+
+```ts
+import { SortedMultiset } from "sortao";
+
+const some = new SortedMultiset< any >( sorted_by_id_comp );
+
+some.add({ id: 1, s: 114 })
+    .add({ id: 1, a: 514 })
+    .add({ id: 1, o: "s" })
+
+some.toArray();         // [{ id: 1, s: 114 }, { id: 1, a: 514 }, { id: 1, o: "s" }]
+
+some.delete({ id: 1 }); // 总是按结构查询 (异构查询)
+
+some.toArray();         // [{ id: 1, a: 514 }, { id: 1, o: "s" }]
+```
+
+这也体现出了和原生集合的区别：
+- 原生集合的 `delete` 方法，是根据值的引用进行匹配的。
+- 而 SortAO 使用的 `delete` 方法，是根据值的结构进行比较的。
+
+这是由于基于匹配的哈希表（无序）和基于比较的排序算法（有序）存在本质区别。
+
+## 更换内核容器
+
+以 [**Sorted-Map**](../../associative/sorted-map/) 和 [**SplayTree**](../../tree/splay-tree/) 为例：
+
+```ts
+import { SortedMap, SplayTree } from "sortao";
+import type { MapEntry } from "sortao"; // 对于 Map 容器.
+
+// 1. 定义键的比较函数
+const compareFn = (a: number, b: number) => a - b;
+
+// 2. 传入 Kernel Factory
+const map = new SortedMap<number, string, SplayTree<MapEntry<number, string>>>(
+  compareFn,
+  (comp) => new SplayTree(comp) 
+)
+
+map.set(100, "Splay");
+map.set(200, "Tree");
+```
+
+如果使用 TS，类型标注可能有些麻烦，但总地来说是这样的，请见谅：
+- **set** `< T, Container<T> >`
+- **map** `< K, V, Container< MapEntry<K,V> > >` 
+
+## 遍历
+
+SortAO 提供的多数容器都实现了 [Internal-Iterable](../../protocols/internal-iterable/)，提供了大量遍历方法。
+
+原生的 `for..of` 迭代器会产生大量的临时对象。推荐使用 SortAO 提供的遍历方法：
+
+```ts
+import { SortedSet } from "sortao";
+
+const set = new SortedSet<number>();
+set.insertMany([10, 20, 30, 40, 50]);
+
+set.forEach((value, index) => {
+  if (value > 30) return true; // 支持短路
+  console.log(`Rank: ${index}, Value: ${value}`);
+});
+
+  // 输出:
+  // Rank: 0, Value: 10
+  // Rank: 1, Value: 20
+  // Rank: 2, Value: 30
+```
+
+对于 Map 类型的容器：
+
+```ts
+import { SortedMap } from "sortao";
+
+const map = new SortedMap<number, string>();
+map.set(100, "Alice").set(200, "Bob");
+
+map.forEach((value, key, index) => {
+  console.log(`Rank: ${index} | ${key} -> ${value}`);
+});
+
+  // 输出:
+  // Rank: 0 | 100 -> Alice
+  // Rank: 1 | 200 -> Bob
+
+const entries = map.toArray(); // [[100, "Alice"], [200, "Bob"]]
+```
+
+## 与 ES 的区别
+
+实际上，由于基于匹配的哈希表（无序）和基于比较的排序算法（有序）存在本质区别。  
+SortAO 的 API 必须与原生集合的 API 有所不同，尤其体现在：
+
+**`get` `delete` 等方法**
+1. 原生的 `get` 会返回 `T` 或 `undefined`
+2. 原生的 `delete` 会返回 boolean。
+3. 而 SortAO 的 `get` `delete` 等方法，会返回 `T`, `[K, V]` 或 `undefined`。
+
+这样设计是因为 SortAO 是基于比较的（有序），而不是匹配的（无序），考虑如下场景：
+
+```ts
+const some = new SortedSet< Object >( comp_by_id );
+
+some.add({ id: 1, name: "Alice" });
+
+const one = some.get({ id: 1 });    // { id: 1, name: "Alice" }
+const two = some.delete({ id: 1 }); // { id: 1, name: "Alice" }
+```
+
+如果不返回原始的 `T` 或 `[K, V]`，我们可能永远无法得知上述结构中的 name。  
+
+这样的困惑尤其会在您使用 map 系列容器时出现：
+
+```ts
+const some = new SortedMap< Object, number >( comp_by_id );
+
+const [_key, value] = some.get({ id: 1 });
+```
+
+也许您并不希望使用这个 `_key`，但它还是被返回了，因为有时可能会需要根据键进行后续操作。
+
+## 访问包装器的内核
+
+你可以通过以下属性 `kernel` `keyCompare` 直接操作内部容器。
+
+```ts
+class SortedMap /* .. */ {
+  public readonly kernel: Kernel;
+  public readonly keyCompare: (a: K, b: K) => number;
+}
+```
+
+实际上，包装器的游标也是对内部容器的游标的封装 `inner`。
+
+```ts
+class SortedMapCursor /* .. */ {
+  public inner: C;
+}
+```
+
+- SortedMap 和 SortedMultimap 对内部游标进行了封装。
+- SortedSet 和 SortedMultiset 直接返回内部游标。
+

@@ -1,0 +1,53 @@
+---
+title: SortAO
+description: A concise, powerful, and efficient TypeScript library for ordered sets.
+template: splash
+hero:
+  tagline: Your TypeScript ordered container suite, also supports switching the underlying container on demand.
+  image:
+    file: ../../../assets/favicon.svg
+  actions:
+    - text: Get Started
+      link: ./core/
+      icon: right-arrow
+    - text: GitHub
+      link: https://github.com/Aurora-creeper/SortAO
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from "@astrojs/starlight/components";
+
+<div class="home-matrix">
+
+<section class="matrix-section">
+
+<h2 class="title">Easy to use</h2>
+
+SortAO provides 4 advanced wrappers out of the box.
+
+- [**Sorted-Map**](./associative/sorted-map/)：Ordered dictionary, with unique keys.
+- [**Sorted-Set**](./associative/sorted-set/)：An ordered set, with unique values.
+- [**Sorted-Multimap**](./associative/sorted-multimap/)：An ordered dictionary, allows duplicate keys.
+- [**Sorted-Multiset**](./associative/sorted-multiset/)：An ordered multiset, allowing repeated values.
+
+</section>
+
+<section class="matrix-section">
+
+<h2 class="title">Flexible and efficient</h2>
+
+These wrappers can replace the underlying containers! You can choose the most suitable engine based on the access pattern of your business.
+
+It is worth noting that these kernel containers can be used independently, providing more low-level access control and facilitating optimization.
+
+| Container                                                                        | Features                                   | Query by ranking  | Insert        |
+| :-------------------------------------------------------------------------- | :------------------------------------- | :---------- | :---------- |
+| <div class="api-name">[Sorted-Block-Array](./sorted-blocks/sorted-block-array/)</div> | Balanced overall performance, memory-friendly, default option.     | *O*(log *N*)  | *O*(*B* + *N*/*B*)  |
+| <div class="api-name">[Sorted-Block-List](./sorted-blocks/sorted-block-list/)</div>   | The query efficiency is consistent with that of native arrays. | ***O*(1)**    | *O*(*N*/*B*)      |
+| <div class="api-name">[Sorted-Block-Deque](./sorted-blocks/sorted-block-deque/)</div> | The operation near the extreme values at both ends is highly efficient.         | ***O*(1)**    | *O*(*N*/*B*)      |
+| <div class="api-name">[SplayTree](./tree/splay-tree/)</div>           | Automatically optimize local hot data.                 | *O*(log *N*) \* | *O*(log *N*) \* |
+
+</section>
+
+</div>
