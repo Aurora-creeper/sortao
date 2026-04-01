@@ -4,7 +4,7 @@ SortAO is a fast, zero-dependency sorted container suite for JavaScript & TypeSc
 
 We provides 4 advanced wrappers out of the box:
 
-- `Sortedmap`, `Sortedset`, `SortedMultimap`, `SortedMultiset`
+- `SortedMap`, `SortedSet`, `SortedMultimap`, `SortedMultiset`
 
 These wrappers can replace the underlying data structure to adapt to different performance patterns.
 
