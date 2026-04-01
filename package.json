@@ -1,0 +1,46 @@
+{
+  "name": "sortao",
+  "version": "0.0.2",
+  "sideEffects": false,
+  "description": "A fast, zero-dependency sorted container suite for JavaScript.",
+  "keywords": [
+    "sorted-map",
+    "sorted-set",
+    "sorted-multimap",
+    "sorted-multiset",
+    "data-structures",
+    "typescript"
+  ],
+  "author": "Astral_rider",
+  "files": [
+    "dist",
+    "types"
+  ],
+  "main": "./dist/sortao.cjs",
+  "module": "./dist/sortao.js",
+  "types": "./types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "module": "./dist/sortao.js",
+      "require": "./dist/sortao.cjs"
+    }
+  },
+  "scripts": {
+    "test": "vitest --typecheck",
+    "coverage": "vitest run --coverage",
+    "bench": "vitest bench --run",
+    "clean:types": "rimraf types",
+    "build": "pnpm run clean:types && tsc -p tsconfig.build.json && vite build"
+  },
+  "license": "MIT",
+  "packageManager": "pnpm@10.8.0",
+  "devDependencies": {
+    "@types/node": "^22",
+    "rimraf": "^6.1.2",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1",
+    "vitest": "^4.0.18",
+    "@vitest/coverage-v8": "^4.0.18"
+  }
+}
