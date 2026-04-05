@@ -198,7 +198,7 @@ SortAO 提供的多数容器都实现了 [Internal-Iterable](../../protocols/int
 import { SortedSet } from "sortao";
 
 const set = new SortedSet<number>();
-set.insertMany([10, 20, 30, 40, 50]);
+set.add(10).add(20).add(30).add(40).add(50);
 
 set.forEach((value, index) => {
   if (value > 30) return true; // 支持短路
@@ -252,7 +252,7 @@ const two = some.delete({ id: 1 }); // { id: 1, name: "Alice" }
 ```
 
 如果不返回原始的 `T` 或 `[K, V]`，我们可能永远无法得知上述结构中的 name。  
-
+ 
 这样的困惑尤其会在您使用 map 系列容器时出现：
 
 ```ts

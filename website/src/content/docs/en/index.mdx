@@ -44,8 +44,8 @@ It is worth noting that these kernel containers can be used independently, provi
 | Container                                                                        | Features                                   | Query by ranking  | Insert        |
 | :-------------------------------------------------------------------------- | :------------------------------------- | :---------- | :---------- |
 | <div class="api-name">[Sorted-Block-Array](./sorted-blocks/sorted-block-array/)</div> | Balanced overall performance, memory-friendly, default option.     | *O*(log *N*)  | *O*(*B* + *N*/*B*)  |
-| <div class="api-name">[Sorted-Block-List](./sorted-blocks/sorted-block-list/)</div>   | The query efficiency is consistent with that of native arrays. | ***O*(1)**    | *O*(*N*/*B*)      |
-| <div class="api-name">[Sorted-Block-Deque](./sorted-blocks/sorted-block-deque/)</div> | The operation near the extreme values at both ends is highly efficient.         | ***O*(1)**    | *O*(*N*/*B*)      |
+| <div class="api-name">[Sorted-Block-List](./sorted-blocks/sorted-block-list/)</div>   | The query efficiency is consistent with that of native arrays. | ***O*(1)**    | *O*(*B* + *N*/*B*)      |
+| <div class="api-name">[Sorted-Block-Deque](./sorted-blocks/sorted-block-deque/)</div> | The operation near the extreme values at both ends is highly efficient.         | ***O*(1)**    | *O*(*B* + *N*/*B*)      |
 | <div class="api-name">[SplayTree](./tree/splay-tree/)</div>           | Automatically optimize local hot data.                 | *O*(log *N*) \* | *O*(log *N*) \* |
 
 </section>

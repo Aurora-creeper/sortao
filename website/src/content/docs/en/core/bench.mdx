@@ -1,6 +1,6 @@
 ---
-title: 基准测试
-description: 基准测试
+title: Benchmarks
+description: Benchmarks
 # tableOfContents: false
 sidebar:
   order: 4
@@ -8,48 +8,48 @@ sidebar:
 
 import { Badge } from '@astrojs/starlight/components';
 
-基准测试在不同平台，不同 JS 引擎，不同内存配置，不同硬件下，结果总是会有所不同。
+Benchmark tests will always yield different results across various platforms, different JavaScript engines, different memory configurations, and different hardware. 
 
-下面的基准测试结果挑选了在波动中，容器性能相对较差的结果，可供参考。
+The following benchmark test results have selected the relatively poor container performance results during fluctuations for your reference. 
 
-## 省流
+## TL;DR;
 
-这里展示一些大家感兴趣的结果，以下在 500,000 元素下测试每秒的性能：
+Here are some results that everyone is interested in. The following tests the performance per second with 500,000 elements already emplaced:
 
-在每秒中按下标访问：
-- 原生数组 ~23,000,000 次。
-- `BlockArray` 在 isUniform 条件下访问 ~19,000,000 次，否则 ~11,000,000 次。
-- `BlockList`  ~19,000,000 次。**(访问最快！)**
-- `BlockDeque`  ~16,000,000 次。
+In each second, the access by subscript is as follows:
+- Native array: ~23,000,000 times.
+- `BlockArray`: ~11,000,000 times.
+- `BlockList`: ~19,000,000 times. **(Fastest access!)**
+- `BlockDeque` ~16,000,000 times. 
 
-在每秒中插入/删除（中部）：
-- 原生数组 ~4,500 次。
-- `BlockArray` ~1,100,000 次。**（非常均衡！）**
-- `BlockList` ~140,000 次。
-- `BlockDeque` ~110,000 次。
+Insertion/deletion in the middle per second:
+- Native array ~4,500 times.
+- `BlockArray` ~1,100,000 times. **(Very balanced!)**
+- `BlockList` ~140,000 times.
+- `BlockDeque` ~110,000 times. 
 
-在每秒中插入/删除（靠近头部约 600 个元素处）：
-- 原生数组 ~2,000 次。
-- `BlockArray` ~710,000 次。
-- `BlockList` ~75,000 次。
-- `BlockDeque` ~2,800,000 次。**(在两端很快！)**
+Insertion/deletion (approximately 600 elements from the head) per second:
+- Native array ~2,000 times.
+- `BlockArray` ~710,000 times.
+- `BlockList` ~75,000 times.
+- `BlockDeque` ~2,800,000 times. **(Very fast at both ends!)**
 
-此外，由于 `Sorted-` 容器是他们的包装器，因此多数操作的效率总是一样的。
+since `Sorted-` containers are wrappers for them, the efficiency of most operations is always the same.
 
 ---
 
-让我们看看使用了包装器以后的性能，不妨以 `SortedSet` 为例.
+Let's take a look at their performance under wrappers such as `SortedSet`.
 
-|                  |     随机查询        |  随机插入/删除  |
+|                  | Random Rank Access | Random ins/del |
 | :--------------: | :----------------: | :------------: |
 | SortedBlockArray |   11,000,000 hz    |   818,000 hz   |
 | SortedBlockList  |   19,000,000 hz    |   200,000 hz   |
 | SortedBlockDeque |   16,000,000 hz    |   220,000 hz   |
 |    SplayTree     |    2,300,00 hz     |   460,000 hz   |
 
-为了保证容器大小基本不变，我们每次会插入一个元素，并删除另一个元素（有两次操作）。
+To ensure that the size of the container remains basically unchanged, we will insert one element and delete another element each time (there are two operations). 
 
-我们保证这两个元素总是存在且提前随机生成，因此实际上的性能可能远高于测试结果。
+We guarantee that these two elements exist and are randomly generated in advance, so the actual performance may be much higher than the test results.
 
 ## Blocks
 

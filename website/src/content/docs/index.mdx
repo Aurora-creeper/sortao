@@ -44,8 +44,8 @@ SortAO 提供了开箱即用的四个高级包装器。
 | 容器                                                                        | 特性                                   | 按排名查询  | 插入        |
 | :-------------------------------------------------------------------------- | :------------------------------------- | :---------- | :---------- |
 | <div class="api-name">[Sorted-Block-Array](./sorted-blocks/sorted-block-array/)</div> | 综合性能均衡，内存友好，默认选项。     | *O*(log *N*)  | *O*(*B* + *N*/*B*)  |
-| <div class="api-name">[Sorted-Block-List](./sorted-blocks/sorted-block-list/)</div>   | 查询效率与原生数组一致，兼顾插入效率。 | ***O*(1)**    | *O*(*N*/*B*)      |
-| <div class="api-name">[Sorted-Block-Deque](./sorted-blocks/sorted-block-deque/)</div> | 对于两端极值附近的操作，效率非常高。         | ***O*(1)**    | *O*(*N*/*B*)      |
+| <div class="api-name">[Sorted-Block-List](./sorted-blocks/sorted-block-list/)</div>   | 查询效率与原生数组一致，兼顾插入效率。 | ***O*(1)**    | *O*(*B* + *N*/*B*)      |
+| <div class="api-name">[Sorted-Block-Deque](./sorted-blocks/sorted-block-deque/)</div> | 对于两端极值附近的操作，效率非常高。         | ***O*(1)**    | *O*(*B* + *N*/*B*)      |
 | <div class="api-name">[SplayTree](./tree/splay-tree/)</div>           | 自动优化局部热点数据。                 | *O*(log *N*) \* | *O*(log *N*) \* |
 
 </section>
