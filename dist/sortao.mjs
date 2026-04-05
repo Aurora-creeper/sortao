@@ -215,10 +215,6 @@ class L extends d {
   constructor(t = 512) {
     super(), this.B = t;
   }
-  /**
-   * Returns a high-performance internal iterator for functional operations.
-   * Uses raw nested loops to achieve near-native iteration speed.
-   */
   _traverse(t) {
     let e = 0;
     const s = this.blocks, i = s.length;
@@ -1523,15 +1519,14 @@ class A extends L {
   }
   /**
    * Appends one or more elements to the end of the array.
-   * Time Complexity: Amortized O(1) for a single value.
+   * Time Complexity: O(1) for a single value.
    */
   push(...t) {
     t.length > 0 && this.pushAll(t);
   }
   /**
    * Appends an array of elements to the end.
-   * Highly optimized to bypass generic splice logic.
-   * Time Complexity: O(K) for K values.
+   * Time Complexity: O(1) for a single value.
    */
   pushAll(t) {
     if (t.length === 0) return;
@@ -1550,7 +1545,7 @@ class A extends L {
   }
   /**
    * Removes and returns the last element of the array.
-   * Time Complexity: Amortized O(1)
+   * Time Complexity: O(1)
    */
   pop() {
     if (this._length === 0) return;
@@ -1559,7 +1554,6 @@ class A extends L {
   }
   /**
    * Inserts one or more elements to the beginning of the array.
-   * Time Complexity: Amortized O(B) for a single value. O(K + B + N/B) for K values.
    */
   unshift(...t) {
     if (this.isUniform = !1, t.length === 1) {
@@ -1575,7 +1569,6 @@ class A extends L {
   }
   /**
    * Removes and returns the first element of the array.
-   * Time Complexity: Amortized O(B), significantly faster than native array's O(N).
    */
   shift() {
     if (this._length === 0) return;
@@ -1589,10 +1582,6 @@ class A extends L {
   splice(t, e, ...s) {
     return this.spliceAll(t, e, s);
   }
-  /**
-   * Direct array-based version of splice to avoid stack overflow when dealing with large datasets.
-   * Time Complexity: O(K_in + K_out + B + N/B)
-   */
   spliceAll(t, e, s) {
     this.isUniform = !1;
     let i = t < 0 ? Math.max(this._length + t, 0) : Math.min(t, this._length), r;
@@ -1626,8 +1615,6 @@ class A extends L {
   }
   /**
    * Returns a section of an array as a new BlockArray.
-   * Performs a shallow copy of the elements into new blocks to prevent shared mutation.
-   * Time Complexity: O(K + log(N/B))
    */
   slice(t, e) {
     const s = t === void 0 ? 0 : t < 0 ? Math.max(this._length + t, 0) : Math.min(t, this._length), i = e === void 0 ? this._length : e < 0 ? Math.max(this._length + e, 0) : Math.min(e, this._length), r = new A(this.B);
@@ -1644,9 +1631,7 @@ class A extends L {
     return r.blocks = c, r._length = i - s, r.rebuildPrefixSums(), r.isUniform = s % this.B === 0, r._tryMerge(0), r._tryMerge(r.blocks.length - 1), r;
   }
   /**
-   * Combines two or more arrays. 
-   * Highly optimized for BlockArray inputs by copying whole blocks.
-   * Time Complexity: O(N_total) but with fast block-level shallow copies.
+   * Combines two or more arrays.
    */
   concat(...t) {
     const e = this.slice();
@@ -1671,8 +1656,8 @@ class A extends L {
   }
   /**
    * Re-organizes the internal block structure.
-   * Can be used to change the block size (B) dynamically or to defragment 
-   * the array to achieve 100% block density for optimal performance.
+   * Can be used to change the block size (B) dynamically or to defragment.
+   * Sets `isUniform` to true.
    * Time Complexity: O(N)
    */
   rebase(t) {

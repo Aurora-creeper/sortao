@@ -1,8 +1,6 @@
 import { InternalIterable } from '../internal-iterable';
 /**
- * The pure physical core of all Tiered Vector variants (B+ Tree style).
  * Manages chunk splitting, merging, prefix sums, and element splice operations.
- * Completely decoupled from high-level logical operations (index mapping vs value searching).
  */
 export declare abstract class BlockArrayBase<T> extends InternalIterable<T> {
     blocks: T[][];
@@ -11,10 +9,6 @@ export declare abstract class BlockArrayBase<T> extends InternalIterable<T> {
     protected B: number;
     protected isUniform: boolean;
     constructor(blockSize?: number);
-    /**
-     * Returns a high-performance internal iterator for functional operations.
-     * Uses raw nested loops to achieve near-native iteration speed.
-     */
     _traverse(callback: (val: T, index: number) => boolean | void): void;
     /** Subclasses must still implement the cursor entry point. */
     abstract cursor(bi?: number, li?: number): any;
