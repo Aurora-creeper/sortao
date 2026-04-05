@@ -1,13 +1,22 @@
 {
   "name": "sortao",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "sideEffects": false,
   "description": "A fast, zero-dependency sorted container suite for JavaScript.",
+  "homepage": "https://sortao.com/en/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Aurora-creeper/sortao"
+  },
   "keywords": [
     "sorted-map",
     "sorted-set",
     "sorted-multimap",
     "sorted-multiset",
+    "map",
+    "set",
+    "multimap",
+    "multiset",
     "data-structures",
     "typescript"
   ],
